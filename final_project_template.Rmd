@@ -1,0 +1,277 @@
+---
+title: "Final Project"
+output: pdf_document
+---
+
+
+**Your Name**:
+**Your G Number**:
+
+
+```{r warning = FALSE, message = FALSE}
+# Suppress dplyr summarise grouping warning messages
+options(dplyr.summarise.inform = FALSE)
+
+## Add R libraries here
+library(tidyverse)
+library(tidymodels)
+
+
+# Load data
+loans_df <- read_rds("E:/RDataFiles/loan_data.rds")
+
+```
+# Summary of Results [50 Points]
+
+Write a summary of your overall findings and recommendations to the executives at the bank. Think of this section as your closing remarks of a presentation, where you summarize your key findings, model performance, and make recommendations to improve loan processes at the bank.
+
+Your executive summary must be written in a business tone, with minimal grammatical errors, and should include the following sections:
+
+1. An introduction where you explain the business problem and goals of your data analysis
+
+    - What problem(s) is this company trying to solve? Why are they important to their future success?
+  
+    - What was the goal of your analysis? What questions were you trying to answer and why do they matter?
+
+
+2. Highlights and key findings from your Exploratory Data Analysis section 
+    - What were the interesting findings from your analysis and **why are they important for the business**?
+
+    - This section is meant to **establish the need for your recommendations** in the following section
+
+
+3. Your “best” classification model and an analysis of its performance 
+    - In this section you should talk about the expected error of your model on future data
+      - To estimate future performance, you can use your model performance results on the **test data**
+    - You should discuss at least one performance metric, such as an F1 or ROC AUC for your model. However, you must explain the results in an **intuitive, non-technical manner**. Your audience in this case are executives at a bank with limited knowledge of machine learning.
+
+
+4. Your recommendations to the company on how to reduce loan default rates 
+  
+    - Each recommendation must be supported by your data analysis results 
+
+    - You must clearly explain why you are making each recommendation and which results from your data analysis support this recommendation
+
+    - You must also describe the potential business impact of your recommendation:
+      
+      - Why is this a good recommendation? 
+      
+      - What benefits will the business achieve?
+
+5. Conclusion
+
+Wrap up the report with concluding remarks by summarizing the results and your recommendations in two or three paragraphs.
+
+6. Appendix/Appendices
+
+# Data Analysis [30 Points]
+
+In this section, you must think of at least 6 relevant questions that explore the relationship between `loan_default` and the other variables in the `loan_df` data set. The goal of your analysis should be discovering which variables drive the differences between customers who do and do not default on their loans.
+
+You must answer each question and provide supporting data summaries with either a summary data frame (using `dplyr`/`tidyr`) or a plot (using `ggplot`) or both.
+
+In total, you must have a minimum of 3 plots (created with `ggplot`) and 3 summary data frames (created with `dplyr`) for the exploratory data analysis section. Among the plots you produce, you must have at least 3 different types (ex. box plot, bar chart, histogram, scatter plot, etc...)
+
+See the example question below.
+
+
+**Note**: To add an R code chunk to any section of your project, you can use the keyboard shortcut `Ctrl` + `Alt` + `i` or the `insert` button at the top of your R project template notebook file.
+
+
+## Sample Question
+
+**Are there differences in loan default rates by loan purpose?**
+
+**Answer**: Yes, the data indicates that credit card and medical loans have significantly larger default rates than any other type of loan. In fact, both of these loan types have default rates at more than 50%. This is nearly two times the average default rate for all other loan types.
+
+
+### Summary Table
+
+```{r echo = TRUE, fig.height=5, fig.width=9}
+loans_df %>%
+  group_by(loan_purpose) %>% 
+  summarise(n_customers = n(),
+            customers_default = sum(loan_default == 'yes'),
+            default_percent = 100 * mean(loan_default == 'yes'))
+```
+
+
+### Data Visulatization
+
+```{r echo = TRUE, fig.height=5, fig.width=9}
+default_rates <- loans_df %>%
+                 group_by(loan_purpose) %>% 
+                 summarise(n_customers = n(),
+                 customers_default = sum(loan_default == 'yes'),
+                 default_percent = 100 * mean(loan_default == 'yes'))
+
+
+ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent)) +
+    geom_bar(stat = 'identity', fill = '#006EA1', color = 'white') +
+    labs(title = 'Loan Default Rate by Purpose of Loan',
+         x = 'Loan Purpose',
+         y = 'Default Percentage') +
+    theme_light()
+```
+
+
+
+
+
+## Question 1
+
+
+**Question**:
+
+
+**Answer**:
+
+
+```{r}
+
+
+
+```
+
+
+
+## Question 2
+
+
+**Question**:
+
+
+**Answer**:
+
+
+```{r}
+
+
+
+```
+
+
+## Question 3
+
+
+**Question**:
+
+
+**Answer**:
+
+
+```{r}
+
+
+
+```
+
+
+
+## Question 4
+
+
+**Question**:
+
+
+**Answer**:
+
+
+```{r}
+
+
+
+```
+
+
+
+## Question 5
+
+
+**Question**:
+
+
+**Answer**:
+
+
+```{r}
+
+
+
+```
+
+## Question 6
+
+
+**Question**:
+
+
+**Answer**:
+
+
+```{r}
+
+
+
+```
+
+
+# Predictive Modeling [70 Points]
+
+
+In this section of the project, you will fit **three classification algorithms** to predict the response variable,`loan_default`. You should use all of the other variables in the `loans_df` data as predictor variables for each model.
+
+You must follow the machine learning steps below. 
+
+The data splitting and feature engineering steps should only be done once so that your models are using the same data and feature engineering steps for training.
+
+- Split the `loans_df` data into a training and test set (remember to set your seed)
+- Specify a feature engineering pipeline with the `recipes` package
+    - You can include steps such as skewness transformation, dummy variable encoding or any other steps you find appropriate
+- Specify a `parsnip` model object
+    - You may choose from the following classification algorithms:
+      - Logistic Regression
+      - LDA
+      - QDA
+      - KNN
+      - Decision Tree
+      - Random Forest
+- Package your recipe and model into a workflow
+- Fit your workflow to the training data
+    - If your model has hyperparameters:
+      - Split the training data into 5 folds for 5-fold cross validation using `vfold_cv` (remember to set your seed)
+      - Perform hyperparamter tuning with a random grid search using the `grid_random()` function 
+      - Hyperparameter tuning can take a significant amount of computing time. Be careful not to set the `size` argument of `grid_random()` too large. I recommend `size` = 10 or smaller.
+      - Select the best model with `select_best()` and finalize your workflow
+- Evaluate model performance on the test set by plotting an ROC curve using `autoplot()` and calculating the area under the ROC curve on your test data
+
+
+
+## Model 1
+
+```{r}
+
+
+
+```
+
+
+
+## Model 2
+
+```{r}
+
+
+
+```
+
+## Model 3
+
+```{r}
+
+
+
+```
+
+
+--- End of the Project ---
