@@ -4,8 +4,8 @@ output: pdf_document
 ---
 
 
-**Your Name**:
-**Your G Number**:
+**Your Name**: Anasa Alamgir
+**Your G Number**: G01300460
 
 
 ```{r warning = FALSE, message = FALSE}
@@ -18,7 +18,7 @@ library(tidymodels)
 
 
 # Load data
-loans_df <- read_rds("E:/RDataFiles/loan_data.rds")
+loans_df <- read_rds("loan_data.rds")
 
 ```
 # Summary of Results [50 Points]
@@ -88,6 +88,7 @@ See the example question below.
 ### Summary Table
 
 ```{r echo = TRUE, fig.height=5, fig.width=9}
+
 loans_df %>%
   group_by(loan_purpose) %>% 
   summarise(n_customers = n(),
@@ -121,7 +122,7 @@ ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent
 ## Question 1
 
 
-**Question**:
+**Question**: Is loan default rate dependent on loan amount?
 
 
 **Answer**:
@@ -138,7 +139,8 @@ ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent
 ## Question 2
 
 
-**Question**:
+**Question**: Is there a relationship between loan default rate and history of missed
+payments in the past 2 years?
 
 
 **Answer**:
@@ -154,7 +156,7 @@ ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent
 ## Question 3
 
 
-**Question**:
+**Question**: Is there a relationship between loan default rate and annual income?
 
 
 **Answer**:
@@ -171,10 +173,11 @@ ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent
 ## Question 4
 
 
-**Question**:
+**Question**: Is there a relationship between loan default rate and debt-to-income
+ratio?
 
 
-**Answer**:
+**Answer**: 
 
 
 ```{r}
@@ -188,7 +191,8 @@ ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent
 ## Question 5
 
 
-**Question**:
+**Question**: Is there a relationship between loan default rate and history of
+bankruptcy?
 
 
 **Answer**:
@@ -203,7 +207,7 @@ ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent
 ## Question 6
 
 
-**Question**:
+**Question**: Is there a relationship between loan default rate and interest rates and installments?
 
 
 **Answer**:
@@ -250,7 +254,7 @@ The data splitting and feature engineering steps should only be done once so tha
 ## Model 1
 
 ```{r}
-
+# logistic regression
 
 
 ```
@@ -260,7 +264,7 @@ The data splitting and feature engineering steps should only be done once so tha
 ## Model 2
 
 ```{r}
-
+# decision tree
 
 
 ```
@@ -268,7 +272,7 @@ The data splitting and feature engineering steps should only be done once so tha
 ## Model 3
 
 ```{r}
-
+#knn model
 
 
 ```
