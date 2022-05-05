@@ -254,8 +254,7 @@ The data splitting and feature engineering steps should only be done once so tha
 ## Model 1
 
 ```{r}
-# logistic regression
-
+# logistic regression model
 
 ```
 
@@ -264,7 +263,7 @@ The data splitting and feature engineering steps should only be done once so tha
 ## Model 2
 
 ```{r}
-# decision tree
+#lda model
 
 
 ```
