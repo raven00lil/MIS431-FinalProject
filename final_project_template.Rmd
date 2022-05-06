@@ -15,7 +15,13 @@ options(dplyr.summarise.inform = FALSE)
 ## Add R libraries here
 library(tidyverse)
 library(tidymodels)
-
+library(discrim)
+library(kknn)
+library(dplyr)
+library(klaR)
+library(ggplot2)
+library(vip)
+library(magrittr)
 
 # Load data
 loans_df <- read_rds("loan_data.rds")
@@ -75,9 +81,6 @@ In total, you must have a minimum of 3 plots (created with `ggplot`) and 3 summa
 See the example question below.
 
 
-**Note**: To add an R code chunk to any section of your project, you can use the keyboard shortcut `Ctrl` + `Alt` + `i` or the `insert` button at the top of your R project template notebook file.
-
-
 ## Sample Question
 
 **Are there differences in loan default rates by loan purpose?**
@@ -116,22 +119,32 @@ ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent
 ```
 
 
+```{r}
+head(loans_df)
+```
 
 
 
 ## Question 1
 
 
-**Question**: Is loan default rate dependent on loan amount?
+**Question**: Is there a relationship between loan default and loan amount?
 
 
 **Answer**:
 
 
 ```{r}
-
-
-
+loans_df %>% ggplot(
+  aes(x = loan_amount, fill = loan_default)
+) +
+  geom_histogram() + scale_fill_manual(values = c("#33CC66", "#FF3399"))+
+  facet_wrap(~ loan_default)+
+  labs(
+    title = "Loan default distribution by loan amount",
+    x = "loan amount",
+    y = "number of loans"
+  )
 ```
 
 
@@ -139,33 +152,38 @@ ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent
 ## Question 2
 
 
-**Question**: Is there a relationship between loan default rate and history of missed
-payments in the past 2 years?
+**Question**: Is there a relationship between loan default and history of missed
+payments in the past 2 years based on term?
 
 
 **Answer**:
 
 
 ```{r}
-
-
-
+loans_df %>%
+  group_by(term, loan_default) %>%
+  summarise(
+    num_loans = n()
+  )
 ```
 
 
 ## Question 3
 
 
-**Question**: Is there a relationship between loan default rate and annual income?
+**Question**: Is there a relationship between loan default and annual income?
 
 
 **Answer**:
 
 
 ```{r}
-
-
-
+loans_df %>% group_by(loan_default) %>%
+  summarise(
+    avg_income = mean(annual_income),
+    min_income = min(annual_income),
+    sd_income = sd(annual_income)
+  )
 ```
 
 
@@ -173,17 +191,20 @@ payments in the past 2 years?
 ## Question 4
 
 
-**Question**: Is there a relationship between loan default rate and debt-to-income
+**Question**: Is there a relationship between loan default and debt-to-income 
 ratio?
 
 
 **Answer**: 
 
 
-```{r}
-
-
-
+```{r, fig.width=8}
+loans_df %>% ggplot(
+  aes(x = debt_to_income, fill = loan_default)
+) + geom_histogram(bins = 40, color = "white") +
+  theme_light() +
+scale_fill_brewer(palette="Set1") +
+  facet_wrap(~ loan_default)
 ```
 
 
@@ -191,32 +212,36 @@ ratio?
 ## Question 5
 
 
-**Question**: Is there a relationship between loan default rate and history of
-bankruptcy?
+**Question**: Is there a relationship between loan default and 
+years of credit history?
 
 
 **Answer**:
 
 
 ```{r}
-
-
-
+loans_df %>% ggplot(
+  aes(x = years_credit_history, fill = loan_default) 
+) +
+  geom_bar() + facet_wrap(~loan_default)
 ```
 
 ## Question 6
 
 
-**Question**: Is there a relationship between loan default rate and interest rates and installments?
+**Question**: Is there a relationship between loan default rate and interest 
+rates and loan purpose?
 
 
 **Answer**:
 
 
 ```{r}
-
-
-
+loans_df %>% group_by(loan_default, loan_purpose) %>%
+  summarise(
+    avg_interestrate = mean(interest_rate),
+    max_interestrate = max(interest_rate)
+  )
 ```
 
 
@@ -251,11 +276,81 @@ The data splitting and feature engineering steps should only be done once so tha
 
 
 
-## Model 1
+## Model 1 Logistic Regression
 
 ```{r}
-# logistic regression model
+#split loans_df into training and test sets
+set.seed(172)
+loan_split <- initial_split(loans_df, prop = 0.75,
+                            strata = loan_default)
 
+loan_training <- loan_split %>% training()
+
+loan_test <- loan_split %>% testing()
+```
+
+```{r}
+#cross validation folds for hyperparameter tuning
+set.seed(172) 
+loan_folds <- vfold_cv(loan_training, v = 6)
+```
+
+```{r}
+#feature engineering
+loan_recipe <- recipe(loan_default ~ .,data = loan_training) %>%
+  step_YeoJohnson(all_numeric(), -all_outcomes()) %>%
+  step_normalize(all_numeric(), -all_outcomes()) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+loan_recipe %>%
+  prep(training = loan_training) %>%
+  bake(new_data = NULL)
+```
+
+
+```{r}
+#specify model
+loan_logistic <- logistic_reg() %>%
+  set_engine('glm') %>%
+  set_mode('classification')
+```
+
+```{r}
+#create workflow
+logistic_wf <- workflow() %>%
+  add_model(loan_logistic) %>%
+  add_recipe(loan_recipe)
+
+#roc curve and auc
+logistic_fit <- logistic_wf %>% last_fit(split = loan_split)
+
+# collect predictions
+logistic_predictions <- logistic_fit %>% collect_predictions()
+```
+
+```{r}
+#roc curve and auc
+roc_curve(logistic_predictions,
+          truth = loan_default,
+          estimate = .pred_yes) %>% autoplot()
+
+roc_auc(logistic_predictions, truth = loan_default, .pred_yes)
+```
+
+
+```{r}
+#confusion matrix
+conf_mat(logistic_predictions,
+         truth = loan_default,
+         estimate = .pred_class)
+```
+
+
+```{r}
+#model summary 
+log_model <- glm(loan_default ~., data = loan_training, family = binomial())
+tidy(log_model)
+summary(log_model)
 ```
 
 
