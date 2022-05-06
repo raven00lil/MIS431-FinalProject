@@ -1,5 +1,5 @@
 ---
-title: "Final Project"
+title: "Data Mining Final Project"
 output: pdf_document
 ---
 
@@ -8,7 +8,7 @@ output: pdf_document
 **Your G Number**: G01300460
 
 
-```{r warning = FALSE, message = FALSE}
+```{r warning = FALSE, message = FALSE, include=FALSE}
 # Suppress dplyr summarise grouping warning messages
 options(dplyr.summarise.inform = FALSE)
 
@@ -27,48 +27,27 @@ library(magrittr)
 loans_df <- read_rds("loan_data.rds")
 
 ```
-# Summary of Results [50 Points]
 
-Write a summary of your overall findings and recommendations to the executives at the bank. Think of this section as your closing remarks of a presentation, where you summarize your key findings, model performance, and make recommendations to improve loan processes at the bank.
+# Introduction 
 
-Your executive summary must be written in a business tone, with minimal grammatical errors, and should include the following sections:
+This project aims to explore the factors that lead to loan default and use 
+machine learning models to predict the chance of an applicant defaulting on their
+loan in the future. The Bank has experienced customers defaulting on their loans 
+and therefore seeks to predict whether an applicant will default on their loan
+in order to protect the Bank from large financial losses.
 
-1. An introduction where you explain the business problem and goals of your data analysis
+Exploratory data analysis can help to find the relationship between whether the 
+applicant defaults and the various factors that affect them defaulting on the loan.
 
-    - What problem(s) is this company trying to solve? Why are they important to their future success?
-  
-    - What was the goal of your analysis? What questions were you trying to answer and why do they matter?
+# Summary of Results
 
+The default response variable in this data frame is loan_default, which records
+whether an applicant will default or not. This variable has also been coded with 
+'Yes' and 'No' factors. Therefore using visualization techniques this report will 
+showwhich other factors can explain why some applicants default and others do not.
 
-2. Highlights and key findings from your Exploratory Data Analysis section 
-    - What were the interesting findings from your analysis and **why are they important for the business**?
+Findings...
 
-    - This section is meant to **establish the need for your recommendations** in the following section
-
-
-3. Your “best” classification model and an analysis of its performance 
-    - In this section you should talk about the expected error of your model on future data
-      - To estimate future performance, you can use your model performance results on the **test data**
-    - You should discuss at least one performance metric, such as an F1 or ROC AUC for your model. However, you must explain the results in an **intuitive, non-technical manner**. Your audience in this case are executives at a bank with limited knowledge of machine learning.
-
-
-4. Your recommendations to the company on how to reduce loan default rates 
-  
-    - Each recommendation must be supported by your data analysis results 
-
-    - You must clearly explain why you are making each recommendation and which results from your data analysis support this recommendation
-
-    - You must also describe the potential business impact of your recommendation:
-      
-      - Why is this a good recommendation? 
-      
-      - What benefits will the business achieve?
-
-5. Conclusion
-
-Wrap up the report with concluding remarks by summarizing the results and your recommendations in two or three paragraphs.
-
-6. Appendix/Appendices
 
 # Data Analysis [30 Points]
 
@@ -355,6 +334,7 @@ log_model <- glm(loan_default ~., data = loan_training, family = binomial())
 tidy(log_model)
 summary(log_model)
 ```
+
 
 ```{r}
 vip(log_model)
