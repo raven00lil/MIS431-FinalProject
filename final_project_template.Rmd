@@ -134,11 +134,13 @@ head(loans_df)
 **Answer**:
 
 
-```{r}
+```{r, fig.asp=0.6, fig.width=8}
 loans_df %>% ggplot(
   aes(x = loan_amount, fill = loan_default)
 ) +
-  geom_histogram() + scale_fill_manual(values = c("#33CC66", "#FF3399"))+
+  geom_histogram(bins=10, color="white") + 
+  scale_fill_manual(values = c("#33CC66","#FF3399")) +
+  theme_light() +
   facet_wrap(~ loan_default)+
   labs(
     title = "Loan default distribution by loan amount",
@@ -198,10 +200,10 @@ ratio?
 **Answer**: 
 
 
-```{r, fig.width=8}
+```{r, fig.width=9, fig.asp=0.5}
 loans_df %>% ggplot(
   aes(x = debt_to_income, fill = loan_default)
-) + geom_histogram(bins = 40, color = "white") +
+) + geom_histogram(bins=16, color = "white") + xlim(0,100)+ 
   theme_light() +
 scale_fill_brewer(palette="Set1") +
   facet_wrap(~ loan_default)
@@ -222,8 +224,9 @@ years of credit history?
 ```{r}
 loans_df %>% ggplot(
   aes(x = years_credit_history, fill = loan_default) 
-) +
-  geom_bar() + facet_wrap(~loan_default)
+) + theme_light() +
+  geom_histogram(bins=15, color="white") + 
+  facet_wrap(~loan_default)
 ```
 
 ## Question 6
