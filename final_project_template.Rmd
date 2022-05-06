@@ -353,23 +353,70 @@ tidy(log_model)
 summary(log_model)
 ```
 
+```{r}
+vip(log_model)
+```
 
 
-## Model 2
+## Model 2 LDA or QDA
 
 ```{r}
-#lda model
+#specify model
+
+```
+
+
+```{r}
+#workflow
+
+```
+
+```{r}
+#fit workflow
+
+```
+
+```{r}
+#collect predictions
+```
+
+```{r}
+#roc curve
+
+
+#auc
+
+```
+
+```{r}
+#confusion matrix
+
+```
+
+
+
+## Model 3 K-Nearest Neighbor 
+
+```{r}
+
+
 
 
 ```
 
-## Model 3
 
 ```{r}
-#knn model
+
 
 
 ```
 
+
+
+```{r}
+
+
+
+```
 
 --- End of the Project ---
