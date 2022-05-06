@@ -361,39 +361,42 @@ vip(log_model)
 ```
 
 
-## Model 2 LDA or QDA
+## Model 2 LDA
 
 ```{r}
 #specify model
-
+loan_lda <- discrim_regularized(frac_common_cov = 1) %>%
+  set_engine("klaR") %>%
+  set_mode("classification")
 ```
 
 
 ```{r}
 #workflow
-
+lda_wf <- workflow() %>% add_model(loan_lda) %>% add_recipe(loan_recipe)
 ```
 
 ```{r}
 #fit workflow
-
+lda_fit <- lda_wf %>% last_fit(split=loan_split)
 ```
 
 ```{r}
 #collect predictions
+lda_predictions <- lda_fit %>% collect_predictions()
 ```
 
 ```{r}
 #roc curve
-
-
+roc_curve(lda_predictions, truth=loan_default, estimate= .pred_yes) %>%
+  autoplot()
 #auc
-
+roc_auc(lda_predictions, truth=loan_default, .pred_yes)
 ```
 
 ```{r}
 #confusion matrix
-
+conf_mat(lda_predictions, truth = loan_default, estimate = .pred_class)
 ```
 
 
