@@ -404,25 +404,56 @@ conf_mat(lda_predictions, truth = loan_default, estimate = .pred_class)
 ## Model 3 K-Nearest Neighbor 
 
 ```{r}
-
-
-
-
+#specify model
+knn_model <- nearest_neighbor(neighbors = tune()) %>%
+  set_engine("kknn") %>%
+  set_mode("classification")
 ```
 
 
 ```{r}
-
-
-
+#workflow
+knn_wf <- workflow() %>%
+  add_model(knn_model) %>%
+  add_recipe(loan_recipe)
 ```
 
 
 
 ```{r}
+#create grid for hyperparameter testing
+k_grid <- tibble(neighbors = c(10,20,30,40,50,75,100,125,150))
+```
 
 
+```{r}
+#tuning wf
+set.seed(271)
+knn_tuning <- knn_wf %>% tune_grid(resamples=loan_folds, grid=k_grid)
 
+#select best model from tuning result
+best_k <- knn_tuning %>% select_best(metric='roc_auc')
+
+#add optimal model to wf
+final_knn_wf <- knn_wf %>% finalize_workflow(best_k)
+
+#fit model
+knn_fit <- final_knn_wf %>% last_fit(split=loan_split)
+```
+
+```{r}
+#get df of test prediction results
+knn_predictions <- knn_fit %>% collect_predictions()
+```
+
+```{r}
+#roc curve and roc auc and confusion matrix for predictions
+roc_curve(knn_predictions, truth = loan_default, estimate= .pred_yes) %>%
+  autoplot()
+
+roc_auc(knn_predictions, truth = loan_default, estimate= .pred_yes)
+
+conf_mat(knn_predictions, truth= loan_default, estimate = .pred_class)
 ```
 
 --- End of the Project ---
