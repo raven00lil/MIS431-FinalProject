@@ -11,7 +11,6 @@ output: pdf_document
 ```{r warning = FALSE, message = FALSE, include=FALSE}
 # Suppress dplyr summarise grouping warning messages
 options(dplyr.summarise.inform = FALSE)
-
 ## Add R libraries here
 library(tidyverse)
 library(tidymodels)
@@ -22,19 +21,17 @@ library(klaR)
 library(ggplot2)
 library(vip)
 library(magrittr)
-
 # Load data
 loans_df <- read_rds("loan_data.rds")
-
 ```
 
 # Introduction 
 
-This project aims to explore the factors that lead to loan default and use 
-machine learning models to predict the chance of an applicant defaulting on their
-loan in the future. The Bank has experienced customers defaulting on their loans 
+The Bank has experienced customers defaulting on their loans 
 and therefore seeks to predict whether an applicant will default on their loan
-in order to protect the Bank from large financial losses.
+in order to protect the Bank from large financial losses.This project aims to 
+explore the factors that lead to loan default and use machine learning models 
+to predict the chance of an applicant defaulting on their loan in the future. 
 
 Exploratory data analysis can help to find the relationship between whether the 
 applicant defaults and the various factors that affect them defaulting on the loan.
@@ -42,14 +39,14 @@ applicant defaults and the various factors that affect them defaulting on the lo
 # Summary of Results
 
 The default response variable in this data frame is loan_default, which records
-whether an applicant will default or not. This variable has also been coded with 
+whether an applicant has defaulted or not. This variable has also been coded with 
 'Yes' and 'No' factors. Therefore using visualization techniques this report will 
 showwhich other factors can explain why some applicants default and others do not.
 
 Findings...
 
 
-# Data Analysis [30 Points]
+# Data Analysis [30 Points] MAKE SURE TO REMOVE INSTRUCTIONS 
 
 In this section, you must think of at least 6 relevant questions that explore the relationship between `loan_default` and the other variables in the `loan_df` data set. The goal of your analysis should be discovering which variables drive the differences between customers who do and do not default on their loans.
 
@@ -70,7 +67,6 @@ See the example question below.
 ### Summary Table
 
 ```{r echo = TRUE, fig.height=5, fig.width=9}
-
 loans_df %>%
   group_by(loan_purpose) %>% 
   summarise(n_customers = n(),
@@ -87,8 +83,6 @@ default_rates <- loans_df %>%
                  summarise(n_customers = n(),
                  customers_default = sum(loan_default == 'yes'),
                  default_percent = 100 * mean(loan_default == 'yes'))
-
-
 ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent)) +
     geom_bar(stat = 'identity', fill = '#006EA1', color = 'white') +
     labs(title = 'Loan Default Rate by Purpose of Loan',
@@ -227,7 +221,7 @@ loans_df %>% group_by(loan_default, loan_purpose) %>%
 ```
 
 
-# Predictive Modeling [70 Points]
+# Predictive Modeling [70 Points]  MAKE SURE TO REMOVE INSTRUCTIONS 
 
 
 In this section of the project, you will fit **three classification algorithms** to predict the response variable,`loan_default`. You should use all of the other variables in the `loans_df` data as predictor variables for each model.
@@ -265,9 +259,7 @@ The data splitting and feature engineering steps should only be done once so tha
 set.seed(172)
 loan_split <- initial_split(loans_df, prop = 0.75,
                             strata = loan_default)
-
 loan_training <- loan_split %>% training()
-
 loan_test <- loan_split %>% testing()
 ```
 
@@ -283,7 +275,6 @@ loan_recipe <- recipe(loan_default ~ .,data = loan_training) %>%
   step_YeoJohnson(all_numeric(), -all_outcomes()) %>%
   step_normalize(all_numeric(), -all_outcomes()) %>%
   step_dummy(all_nominal(), -all_outcomes())
-
 loan_recipe %>%
   prep(training = loan_training) %>%
   bake(new_data = NULL)
@@ -302,10 +293,8 @@ loan_logistic <- logistic_reg() %>%
 logistic_wf <- workflow() %>%
   add_model(loan_logistic) %>%
   add_recipe(loan_recipe)
-
 #roc curve and auc
 logistic_fit <- logistic_wf %>% last_fit(split = loan_split)
-
 # collect predictions
 logistic_predictions <- logistic_fit %>% collect_predictions()
 ```
@@ -315,7 +304,6 @@ logistic_predictions <- logistic_fit %>% collect_predictions()
 roc_curve(logistic_predictions,
           truth = loan_default,
           estimate = .pred_yes) %>% autoplot()
-
 roc_auc(logistic_predictions, truth = loan_default, .pred_yes)
 ```
 
@@ -367,17 +355,22 @@ lda_predictions <- lda_fit %>% collect_predictions()
 ```
 
 ```{r}
-#roc curve
-roc_curve(lda_predictions, truth=loan_default, estimate= .pred_yes) %>%
-  autoplot()
-#auc
-roc_auc(lda_predictions, truth=loan_default, .pred_yes)
-```
-
-```{r}
 #confusion matrix
 conf_mat(lda_predictions, truth = loan_default, estimate = .pred_class)
 ```
+
+```{r}
+#roc curve
+roc_curve(lda_predictions, truth=loan_default, estimate= .pred_yes) %>%
+  autoplot()
+```
+
+
+```{r}
+#Area under ROC
+roc_auc(lda_predictions, truth=loan_default, .pred_yes)
+```
+
 
 
 
@@ -410,13 +403,10 @@ k_grid <- tibble(neighbors = c(10,20,30,40,50,75,100,125,150))
 #tuning wf
 set.seed(271)
 knn_tuning <- knn_wf %>% tune_grid(resamples=loan_folds, grid=k_grid)
-
 #select best model from tuning result
 best_k <- knn_tuning %>% select_best(metric='roc_auc')
-
 #add optimal model to wf
 final_knn_wf <- knn_wf %>% finalize_workflow(best_k)
-
 #fit model
 knn_fit <- final_knn_wf %>% last_fit(split=loan_split)
 ```
@@ -426,14 +416,27 @@ knn_fit <- final_knn_wf %>% last_fit(split=loan_split)
 knn_predictions <- knn_fit %>% collect_predictions()
 ```
 
+
 ```{r}
-#roc curve and roc auc and confusion matrix for predictions
+#confusion matrix
+conf_mat(knn_predictions, truth= loan_default, estimate = .pred_class)
+```
+
+
+```{r}
+#roc curve 
 roc_curve(knn_predictions, truth = loan_default, estimate= .pred_yes) %>%
   autoplot()
 
-roc_auc(knn_predictions, truth = loan_default, estimate= .pred_yes)
-
-conf_mat(knn_predictions, truth= loan_default, estimate = .pred_class)
 ```
+
+```{r}
+#Are under ROC
+roc_auc(knn_predictions, truth = loan_default, estimate= .pred_yes)
+```
+
+
+
+
 
 --- End of the Project ---
