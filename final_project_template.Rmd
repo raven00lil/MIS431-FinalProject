@@ -9,7 +9,7 @@ output: pdf_document
 
 
 ```{r warning = FALSE, message = FALSE, include=FALSE}
-# Suppress dplyr summarise grouping warning messages
+# Suppress dplyr summarize grouping warning messages
 options(dplyr.summarise.inform = FALSE)
 ## Add R libraries here
 library(tidyverse)
@@ -27,14 +27,30 @@ loans_df <- read_rds("loan_data.rds")
 
 # Introduction 
 
-The Bank has experienced customers defaulting on their loans 
+The National Bank has experienced customers defaulting on their loans 
 and therefore seeks to predict whether an applicant will default on their loan
 in order to protect the Bank from large financial losses.This project aims to 
 explore the factors that lead to loan default and use machine learning models 
 to predict the chance of an applicant defaulting on their loan in the future. 
 
-Exploratory data analysis can help to find the relationship between whether the 
-applicant defaults and the various factors that affect them defaulting on the loan.
+
+The loans data set contains information on 3 and 5 year loans that were originated
+in 2017 from customers residing in the Middle Atlantic and Northeast regions
+of the United States. Exploratory data analysis can help to find the relationship 
+between whether the applicant defaults and the various factors that affect them 
+defaulting on the loan.
+
+Some questions this report intends to answer:
+
+- What are the factors related to applicants defaulting on their loan?
+- Is it possible to predict whether a customer will default on their loan?
+  - How accurate are these predictions?
+  - How many errors is the model expected to produce?
+- Are there any policies that the bank can implement to reduce the risk of
+loan default?
+  
+
+
 
 # Summary of Results
 
@@ -43,7 +59,7 @@ whether an applicant has defaulted or not. This variable has also been coded wit
 'Yes' and 'No' factors. Therefore using visualization techniques this report will 
 show which other factors can explain why some applicants default and others do not.
 
-Findings...
+Based on the data analysis, 
 
 
 # Data Analysis 
