@@ -41,70 +41,29 @@ applicant defaults and the various factors that affect them defaulting on the lo
 The default response variable in this data frame is loan_default, which records
 whether an applicant has defaulted or not. This variable has also been coded with 
 'Yes' and 'No' factors. Therefore using visualization techniques this report will 
-showwhich other factors can explain why some applicants default and others do not.
+show which other factors can explain why some applicants default and others do not.
 
 Findings...
 
 
-# Data Analysis [30 Points] MAKE SURE TO REMOVE INSTRUCTIONS 
-
-In this section, you must think of at least 6 relevant questions that explore the relationship between `loan_default` and the other variables in the `loan_df` data set. The goal of your analysis should be discovering which variables drive the differences between customers who do and do not default on their loans.
-
-You must answer each question and provide supporting data summaries with either a summary data frame (using `dplyr`/`tidyr`) or a plot (using `ggplot`) or both.
-
-In total, you must have a minimum of 3 plots (created with `ggplot`) and 3 summary data frames (created with `dplyr`) for the exploratory data analysis section. Among the plots you produce, you must have at least 3 different types (ex. box plot, bar chart, histogram, scatter plot, etc...)
-
-See the example question below.
-
-
-## Sample Question
-
-**Are there differences in loan default rates by loan purpose?**
-
-**Answer**: Yes, the data indicates that credit card and medical loans have significantly larger default rates than any other type of loan. In fact, both of these loan types have default rates at more than 50%. This is nearly two times the average default rate for all other loan types.
-
-
-### Summary Table
-
-```{r echo = TRUE, fig.height=5, fig.width=9}
-loans_df %>%
-  group_by(loan_purpose) %>% 
-  summarise(n_customers = n(),
-            customers_default = sum(loan_default == 'yes'),
-            default_percent = 100 * mean(loan_default == 'yes'))
-```
-
-
-### Data Visulatization
-
-```{r echo = TRUE, fig.height=5, fig.width=9}
-default_rates <- loans_df %>%
-                 group_by(loan_purpose) %>% 
-                 summarise(n_customers = n(),
-                 customers_default = sum(loan_default == 'yes'),
-                 default_percent = 100 * mean(loan_default == 'yes'))
-ggplot(data = default_rates, mapping = aes(x = loan_purpose, y = default_percent)) +
-    geom_bar(stat = 'identity', fill = '#006EA1', color = 'white') +
-    labs(title = 'Loan Default Rate by Purpose of Loan',
-         x = 'Loan Purpose',
-         y = 'Default Percentage') +
-    theme_light()
-```
-
-
-```{r}
-head(loans_df)
-```
+# Data Analysis 
 
 
 
 ## Question 1
 
 
+
 **Question**: Is there a relationship between loan default and loan amount?
 
 
-**Answer**:
+
+**Answer**: As indicated by the distribution of loan amount based on 
+whether the applicant defaulted or not, there are a greater number of loans
+that did not default at a lower amount, around $10,000, compared to the number 
+of loans that did default at the same amount. Therefore it shows that loan
+amount might not affect loan default.
+
 
 
 ```{r, fig.asp=0.6, fig.width=8}
@@ -112,7 +71,7 @@ loans_df %>% ggplot(
   aes(x = loan_amount, fill = loan_default)
 ) +
   geom_histogram(bins=10, color="white") + 
-  scale_fill_manual(values = c("#33CC66","#FF3399")) +
+  scale_fill_manual(values = c("#FF3399","#33CC66")) +
   theme_light() +
   facet_wrap(~ loan_default)+
   labs(
@@ -127,35 +86,50 @@ loans_df %>% ggplot(
 ## Question 2
 
 
+
 **Question**: Is there a relationship between loan default and history of missed
-payments in the past 2 years based on term?
+payments in the past 2 years?
 
 
-**Answer**:
+
+**Answer**: The summary does not show a positive relationship between history
+of missed payments and whether the applicant defaulted. There is a higher
+number of loans that defaulted but the applicants did not have history of missed
+payments in the past 2 years. On the other hand, there is a much higher number 
+of loans that did not default but the applicants had history of missed payments 
+in the past 2 years.
 
 
 ```{r}
+
 loans_df %>%
-  group_by(term, loan_default) %>%
+  group_by(loan_default, missed_payment_2_yr) %>%
   summarise(
     num_loans = n()
   )
 ```
 
 
+
+
 ## Question 3
+
 
 
 **Question**: Is there a relationship between loan default and annual income?
 
 
-**Answer**:
+
+**Answer**: Yes, the summary clearly shows that applicants with a lower
+median income ($60,000) and lower average income ($67,818.80) had defaulted
+on their loans compared to applicants with higher average and median incomes.
 
 
 ```{r}
 loans_df %>% group_by(loan_default) %>%
   summarise(
     avg_income = mean(annual_income),
+    median_income = median(annual_income),
     min_income = min(annual_income),
     sd_income = sd(annual_income)
   )
@@ -166,20 +140,24 @@ loans_df %>% group_by(loan_default) %>%
 ## Question 4
 
 
-**Question**: Is there a relationship between loan default and debt-to-income 
-ratio?
+
+**Question**: How does loan default relate to home ownership?
 
 
-**Answer**: 
+
+**Answer**: The data indicates that applicants renting their home are more
+likely to default on their loans compared to a far lesser amount of 
+applicants that own their home.
 
 
-```{r, fig.width=9, fig.asp=0.5}
-loans_df %>% ggplot(
-  aes(x = debt_to_income, fill = loan_default)
-) + geom_histogram(bins=16, color = "white") + xlim(0,100)+ 
-  theme_light() +
-scale_fill_brewer(palette="Set1") +
-  facet_wrap(~ loan_default)
+```{r}
+loans_df %>% filter(loan_default=="yes") %>% 
+  ggplot(aes(x=homeownership, fill=loan_default)) + 
+  geom_bar(fill="#7ACBFF") +
+  theme_minimal() + labs(
+    title="Distribution of loans defaulted based on home ownership", 
+    fill="loan default"
+  )
 ```
 
 
@@ -187,69 +165,77 @@ scale_fill_brewer(palette="Set1") +
 ## Question 5
 
 
-**Question**: Is there a relationship between loan default and 
+**Question**: Is there a relationship between loan default and debt-to-income 
+ratio?
+
+
+**Answer**: The density plot shows that applicants with higher debt-to-income
+ratio defaulted more often than applicants with a lower debt to income ratio. 
+This is most likely because applicants with higher debt to income ratio already
+have substantial amount of debt compared to their income to be able to pay
+on their installments. Applicants with much lower debt to income ratio are
+less likely to have defaulted on their loans.
+
+
+```{r, fig.width=9, fig.asp=0.5}
+loans_df %>% ggplot(
+  aes(x = debt_to_income, color = loan_default)
+) + geom_density() + xlim(0,100)+ 
+  theme_light() +
+scale_fill_brewer(palette="Set1") +
+  labs(
+    title = "Distribution of debt to income ratio by loans defaulted",
+    color = "loan defaulted",
+    x = "debt to income ratio"
+  )
+```
+
+
+
+## Question 6
+
+
+**Question**: How is loan default related to application type and 
 years of credit history?
 
 
-**Answer**:
+**Answer**: The summary indicates that individual applications that got 
+defaulted had a smaller average credit history when compared to joint applications
+with lower credit history that went into default. On the other hand, for both
+types of applications, the ones with higher average credit history did not go 
+into default.
+
 
 
 ```{r}
-loans_df %>% ggplot(
-  aes(x = years_credit_history, fill = loan_default) 
-) + theme_light() +
-  geom_histogram(bins=15, color="white") + 
-  facet_wrap(~loan_default)
+loans_df %>%  group_by(loan_default,application_type) %>% summarize(
+  avg_credit_history=mean(years_credit_history))
 ```
 
-## Question 6
+
+
+## Question 7
 
 
 **Question**: Is there a relationship between loan default rate and interest 
 rates and loan purpose?
 
 
-**Answer**:
+**Answer**: Out of the applicants that defaulted on their loans, small business
+and credit card loans have the highest median interest rates. Therefore, it can 
+be stated that applicants are more likely to default on their loans with a higher
+interest rate, especially when it is for a small business or credit card.
 
 
 ```{r}
-loans_df %>% group_by(loan_default, loan_purpose) %>%
+loans_df %>% filter(loan_default == "yes") %>%
+  group_by(loan_default, loan_purpose) %>%
   summarise(
-    avg_interestrate = mean(interest_rate),
-    max_interestrate = max(interest_rate)
-  )
+    med_interestrate = median(interest_rate))
 ```
 
 
-# Predictive Modeling [70 Points]  MAKE SURE TO REMOVE INSTRUCTIONS 
-
-
-In this section of the project, you will fit **three classification algorithms** to predict the response variable,`loan_default`. You should use all of the other variables in the `loans_df` data as predictor variables for each model.
-
-You must follow the machine learning steps below. 
-
-The data splitting and feature engineering steps should only be done once so that your models are using the same data and feature engineering steps for training.
-
-- Split the `loans_df` data into a training and test set (remember to set your seed)
-- Specify a feature engineering pipeline with the `recipes` package
-    - You can include steps such as skewness transformation, dummy variable encoding or any other steps you find appropriate
-- Specify a `parsnip` model object
-    - You may choose from the following classification algorithms:
-      - Logistic Regression
-      - LDA
-      - QDA
-      - KNN
-      - Decision Tree
-      - Random Forest
-- Package your recipe and model into a workflow
-- Fit your workflow to the training data
-    - If your model has hyperparameters:
-      - Split the training data into 5 folds for 5-fold cross validation using `vfold_cv` (remember to set your seed)
-      - Perform hyperparamter tuning with a random grid search using the `grid_random()` function 
-      - Hyperparameter tuning can take a significant amount of computing time. Be careful not to set the `size` argument of `grid_random()` too large. I recommend `size` = 10 or smaller.
-      - Select the best model with `select_best()` and finalize your workflow
-- Evaluate model performance on the test set by plotting an ROC curve using `autoplot()` and calculating the area under the ROC curve on your test data
-
+# Predictive Modeling 
 
 
 ## Model 1 Logistic Regression
@@ -299,13 +285,6 @@ logistic_fit <- logistic_wf %>% last_fit(split = loan_split)
 logistic_predictions <- logistic_fit %>% collect_predictions()
 ```
 
-```{r}
-#roc curve and auc
-roc_curve(logistic_predictions,
-          truth = loan_default,
-          estimate = .pred_yes) %>% autoplot()
-roc_auc(logistic_predictions, truth = loan_default, .pred_yes)
-```
 
 
 ```{r}
@@ -317,9 +296,27 @@ conf_mat(logistic_predictions,
 
 
 ```{r}
+#roc curve
+roc_curve(logistic_predictions,
+          truth = loan_default,
+          estimate = .pred_yes) %>% autoplot()
+```
+
+
+```{r}
+#area under curve
+roc_auc(logistic_predictions, truth = loan_default, .pred_yes)
+```
+
+
+
+```{r}
 #model summary 
 log_model <- glm(loan_default ~., data = loan_training, family = binomial())
 tidy(log_model)
+```
+
+```{r}
 summary(log_model)
 ```
 
@@ -327,6 +324,8 @@ summary(log_model)
 ```{r}
 vip(log_model)
 ```
+
+
 
 
 ## Model 2 LDA
