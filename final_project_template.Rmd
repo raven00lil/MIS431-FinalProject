@@ -1,6 +1,8 @@
 ---
 title: "Data Mining Final Project"
-output: pdf_document
+output:
+  pdf_document: default
+  word_document: default
 ---
 
 
@@ -262,6 +264,7 @@ interest rate, especially when it is for a small business or credit card.
 ### question 1: Is there a relationship between loan default and loan amount?
 ```{r, fig.asp=0.6, fig.width=8, echo=FALSE}
 # question 1: Is there a relationship between loan default and loan amount?
+# visualization of loans defaulted based on loan amount
 loans_df %>% filter(loan_default=="yes") %>% ggplot(
   aes(x = loan_amount)
 ) +
@@ -279,6 +282,7 @@ loans_df %>% filter(loan_default=="yes") %>% ggplot(
 ```{r, echo=FALSE}
 # question 2: Is there a relationship between loan default and history of missed
 # payments in the past 2 years?
+# summary of missed payments in the past two years grouped by loan default
 loans_df %>%
   group_by(loan_default, missed_payment_2_yr) %>%
   summarise(
@@ -289,6 +293,7 @@ loans_df %>%
 ### question 3: Is there a relationship between loan default and annual income?
 ```{r, echo=FALSE}
 #question 3: Is there a relationship between loan default and annual income?
+# summary of annual income by loan default
 loans_df %>% group_by(loan_default) %>%
   summarise(
     avg_income = mean(annual_income),
@@ -302,6 +307,7 @@ loans_df %>% group_by(loan_default) %>%
 ### question 4: How does loan default relate to home ownership?
 ```{r, echo=FALSE}
 #question 4: How does loan default relate to home ownership?
+#visualization of loans based on home ownership
 loans_df %>% filter(loan_default=="yes") %>% 
   ggplot(aes(x=homeownership, fill=loan_default)) + 
   geom_bar(fill="#7ACBFF") +
@@ -316,6 +322,7 @@ loans_df %>% filter(loan_default=="yes") %>%
 ```{r, fig.width=9, fig.asp=0.5, echo=FALSE}
 #question 5:  Is there a relationship between loan default and debt-to-income 
 #ratio?
+# visualization of the distribution of debt to income ratio by loans defaulted
 loans_df %>% ggplot(
   aes(x = debt_to_income, color = loan_default)
 ) + geom_density() + xlim(0,100)+ 
@@ -333,6 +340,7 @@ scale_fill_brewer(palette="Set1") +
 ```{r, echo=FALSE}
 # question 6: How is loan default related to application type and 
 # years of credit history?
+# summary of years of credit history based on application type and loan default
 loans_df %>%  group_by(loan_default,application_type) %>% summarize(
   avg_credit_history=mean(years_credit_history),
   median_cred_history=median(years_credit_history),
@@ -345,6 +353,7 @@ loans_df %>%  group_by(loan_default,application_type) %>% summarize(
 ```{r, echo=FALSE}
 # question 7: Is there a relationship between loan default rate and interest 
 # rates and loan purpose?
+# summary of interest rates based on loan purpose and loan default
 loans_df %>% filter(loan_default == "yes") %>%
   group_by(loan_default, loan_purpose) %>%
   summarise(
