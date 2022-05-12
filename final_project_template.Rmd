@@ -40,6 +40,21 @@ of the United States. Exploratory data analysis can help to find the relationshi
 between whether the applicant defaults and the various factors that affect them 
 defaulting on the loan.
 
+
+# Data
+
+The loans data set shows applicant data with information on the loan amount, 
+installment amount, interest rate, loan purpose, application type, loan 
+term, home ownership, annual income, current job years, debt to income
+ratio, total credit line, years of credit history, history of 
+bankruptcy and history of tax liens.
+
+In the exploratory data analysis, this report will be using these 
+factors:
+loan amount, installments, interest rates, loan purpose, application
+type, term, home ownership, annual income, current job years, 
+debt to income ratio, and years of credit history.
+
 Some questions this report intends to answer:
 
 - What are the factors related to applicants defaulting on their loan?
@@ -48,8 +63,6 @@ Some questions this report intends to answer:
   - How many errors is the model expected to produce?
 - Are there any policies that the bank can implement to reduce the risk of
 loan default?
-  
-
 
 
 # Summary of Results
@@ -59,54 +72,118 @@ whether an applicant has defaulted or not. This variable has also been coded wit
 'Yes' and 'No' factors. Therefore using visualization techniques this report will 
 show which other factors can explain why some applicants default and others do not.
 
-Based on the data analysis, 
 
-
-# Data Analysis 
-
-
-
-## Question 1
-
-
-
-**Question**: Is there a relationship between loan default and loan amount?
-
-
-
-**Answer**: As indicated by the distribution of loan amount based on 
-whether the applicant defaulted or not, there are a greater number of loans
-that did not default at a lower amount, around $10,000, compared to the number 
-of loans that did default at the same amount. Therefore it shows that loan
-amount might not affect loan default.
+The data visualization results show that a lower loan amount defaulted more often,
+and applicants with lower median income defaulted on their loans as well. 
+In terms of home ownership, renters defaulted more often than applicants that 
+owned their home or paid mortgage on their home. Applicants with a higher 
+debt ratio also defaulted since they have more debt that what they earn. Besides
+that, a higher interest rate also led to applicants defaulting on their loans. 
+The predictive modelling section elaborates on the factors that significantly
+affect loan default and the steps that the bank might find beneficial to 
+implement to reduce the risk of loan default.
 
 
 
-```{r, fig.asp=0.6, fig.width=8}
-loans_df %>% ggplot(
-  aes(x = loan_amount, fill = loan_default)
-) +
-  geom_histogram(bins=10, color="white") + 
-  scale_fill_manual(values = c("#FF3399","#33CC66")) +
-  theme_light() +
-  facet_wrap(~ loan_default)+
-  labs(
-    title = "Loan default distribution by loan amount",
-    x = "loan amount",
-    y = "number of loans"
-  )
+# Predictive Modeling 
+
+In order to find the most significant factors affecting applicants to default on 
+their loans, this report implements Logistic Regression, Linear Discriminant 
+Analysis and K-Nearest Neighbors algorithms. It also uses ROC and AUC to measure
+the accuracy of the model. The most accurate model will be used to find the
+most significant factors affecting loan default. 
+
+The ROC AUC of the Logistic Regression model is 99%, which is the highest of 
+all the three models created. Based on the results of the vip function,
+there are four significant factors affecting loan default:
+
+- interest rate
+- term: five year
+- installment
+- loan amount
+
+Among these four, interest rate and five year term are the most important
+factors. The model also predicts 8.1% of errors that might be made by the model
+(negative predictions that are actually positive). Applicant seem to be most 
+affected by interest rates and loan term, therefore in order to reduce the risk
+of loan default, the bank can take these steps:
+ 
+- Reduce the loan term so that applicants can pay off their loan earlier
+- Reduce the loan interest rate so that applicants can pay off the entire loan
+before it falls into default. 
+
+```{r, echo=FALSE, include=FALSE}
+#split loans_df into training and test sets
+set.seed(172)
+loan_split <- initial_split(loans_df, prop = 0.75,
+                            strata = loan_default)
+loan_training <- loan_split %>% training()
+loan_test <- loan_split %>% testing()
+
+#cross validation folds for hyperparameter tuning
+set.seed(172) 
+loan_folds <- vfold_cv(loan_training, v = 6)
+
+#feature engineering
+loan_recipe <- recipe(loan_default ~ .,data = loan_training) %>%
+  step_YeoJohnson(all_numeric(), -all_outcomes()) %>%
+  step_normalize(all_numeric(), -all_outcomes()) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+loan_recipe %>%
+  prep(training = loan_training) %>%
+  bake(new_data = NULL)
+
+#specify model
+loan_logistic <- logistic_reg() %>%
+  set_engine('glm') %>%
+  set_mode('classification')
+
+#create workflow
+logistic_wf <- workflow() %>%
+  add_model(loan_logistic) %>%
+  add_recipe(loan_recipe)
+#roc curve and auc
+logistic_fit <- logistic_wf %>% last_fit(split = loan_split)
+# collect predictions
+logistic_predictions <- logistic_fit %>% collect_predictions()
+```
+
+### Confusion Matrix for Logistic regression model
+```{r, echo=FALSE}
+#confusion matrix
+conf_mat(logistic_predictions,
+         truth = loan_default,
+         estimate = .pred_class)
+```
+
+
+### ROC AUC for regression model
+```{r, echo=FALSE}
+#area under curve
+roc_auc(logistic_predictions, truth = loan_default, .pred_yes)
 ```
 
 
 
+
+
+
+# Exploratory Data Analysis 
+
+
+## Question 1
+
+**Question**: Is there a relationship between loan default and loan amount?
+
+**Answer**: The distribution of loans that defaulted based on the loan amount 
+shows that a greater number of loans that defaulted had a smaller loan amount.
+There are a lower number of loans which defaulted at a higher loan amount.
+
+
 ## Question 2
-
-
 
 **Question**: Is there a relationship between loan default and history of missed
 payments in the past 2 years?
-
-
 
 **Answer**: The summary does not show a positive relationship between history
 of missed payments and whether the applicant defaulted. There is a higher
@@ -116,8 +193,92 @@ of loans that did not default but the applicants had history of missed payments
 in the past 2 years.
 
 
-```{r}
+## Question 3
 
+**Question**: Is there a relationship between loan default and annual income?
+
+**Answer**: Yes, the summary clearly shows that applicants with a lower
+median income ($60,000) and lower average income ($67,818.80) had defaulted
+on their loans compared to applicants with higher average and median incomes.
+
+
+## Question 4
+
+**Question**: How does loan default relate to home ownership?
+
+**Answer**: The data indicates that applicants renting their home are more
+likely to default on their loans compared to a far lesser amount of 
+applicants that own their home.
+
+
+
+## Question 5
+
+**Question**: Is there a relationship between loan default and debt-to-income 
+ratio?
+
+**Answer**: The density plot shows that applicants with higher debt-to-income
+ratio defaulted more often than applicants with a lower debt to income ratio. 
+This is most likely because applicants with higher debt to income ratio already
+have substantial amount of debt compared to their income to be able to pay
+on their installments. Applicants with much lower debt to income ratio are
+less likely to have defaulted on their loans.
+
+
+
+## Question 6
+
+**Question**: How is loan default related to application type and 
+years of credit history?
+
+**Answer**: The summary indicates that individual applications that got 
+defaulted had a smaller average credit history when compared to joint applications
+with lower credit history that went into default. On the other hand, for both
+types of applications, the ones with higher average credit history did not go 
+into default.
+
+
+
+## Question 7
+
+**Question**: Is there a relationship between loan default rate and interest 
+rates and loan purpose?
+
+**Answer**: Out of the applicants that defaulted on their loans, small business
+and credit card loans have the highest median interest rates. Therefore, it can 
+be stated that applicants are more likely to default on their loans with a higher
+interest rate, especially when it is for a small business or credit card.
+
+
+
+
+
+
+# Appendix
+
+
+## Tables and visualizations
+
+### question 1: Is there a relationship between loan default and loan amount?
+```{r, fig.asp=0.6, fig.width=8, echo=FALSE}
+# question 1: Is there a relationship between loan default and loan amount?
+loans_df %>% filter(loan_default=="yes") %>% ggplot(
+  aes(x = loan_amount)
+) +
+  geom_histogram(bins=12, color="white", fill="#E64D54") +
+  theme_light() +
+  labs(
+    title = "Distribution of loans that defaulted based on loan amount",
+    x = "loan amount",
+    y = "number of loans"
+  )
+```
+
+
+### question 2: Is there a relationship between loan default and history of missed payments in the past 2 years?
+```{r, echo=FALSE}
+# question 2: Is there a relationship between loan default and history of missed
+# payments in the past 2 years?
 loans_df %>%
   group_by(loan_default, missed_payment_2_yr) %>%
   summarise(
@@ -125,23 +286,9 @@ loans_df %>%
   )
 ```
 
-
-
-
-## Question 3
-
-
-
-**Question**: Is there a relationship between loan default and annual income?
-
-
-
-**Answer**: Yes, the summary clearly shows that applicants with a lower
-median income ($60,000) and lower average income ($67,818.80) had defaulted
-on their loans compared to applicants with higher average and median incomes.
-
-
-```{r}
+### question 3: Is there a relationship between loan default and annual income?
+```{r, echo=FALSE}
+#question 3: Is there a relationship between loan default and annual income?
 loans_df %>% group_by(loan_default) %>%
   summarise(
     avg_income = mean(annual_income),
@@ -152,21 +299,9 @@ loans_df %>% group_by(loan_default) %>%
 ```
 
 
-
-## Question 4
-
-
-
-**Question**: How does loan default relate to home ownership?
-
-
-
-**Answer**: The data indicates that applicants renting their home are more
-likely to default on their loans compared to a far lesser amount of 
-applicants that own their home.
-
-
-```{r}
+### question 4: How does loan default relate to home ownership?
+```{r, echo=FALSE}
+#question 4: How does loan default relate to home ownership?
 loans_df %>% filter(loan_default=="yes") %>% 
   ggplot(aes(x=homeownership, fill=loan_default)) + 
   geom_bar(fill="#7ACBFF") +
@@ -177,23 +312,10 @@ loans_df %>% filter(loan_default=="yes") %>%
 ```
 
 
-
-## Question 5
-
-
-**Question**: Is there a relationship between loan default and debt-to-income 
-ratio?
-
-
-**Answer**: The density plot shows that applicants with higher debt-to-income
-ratio defaulted more often than applicants with a lower debt to income ratio. 
-This is most likely because applicants with higher debt to income ratio already
-have substantial amount of debt compared to their income to be able to pay
-on their installments. Applicants with much lower debt to income ratio are
-less likely to have defaulted on their loans.
-
-
-```{r, fig.width=9, fig.asp=0.5}
+### question 5:  Is there a relationship between loan default and debt-to-income ratio?
+```{r, fig.width=9, fig.asp=0.5, echo=FALSE}
+#question 5:  Is there a relationship between loan default and debt-to-income 
+#ratio?
 loans_df %>% ggplot(
   aes(x = debt_to_income, color = loan_default)
 ) + geom_density() + xlim(0,100)+ 
@@ -207,43 +329,22 @@ scale_fill_brewer(palette="Set1") +
 ```
 
 
-
-## Question 6
-
-
-**Question**: How is loan default related to application type and 
-years of credit history?
-
-
-**Answer**: The summary indicates that individual applications that got 
-defaulted had a smaller average credit history when compared to joint applications
-with lower credit history that went into default. On the other hand, for both
-types of applications, the ones with higher average credit history did not go 
-into default.
-
-
-
-```{r}
+### question 6: How is loan default related to application type and years of credit history?
+```{r, echo=FALSE}
+# question 6: How is loan default related to application type and 
+# years of credit history?
 loans_df %>%  group_by(loan_default,application_type) %>% summarize(
-  avg_credit_history=mean(years_credit_history))
+  avg_credit_history=mean(years_credit_history),
+  median_cred_history=median(years_credit_history),
+  sd_cred_history=sd(years_credit_history)
+  )
 ```
 
 
-
-## Question 7
-
-
-**Question**: Is there a relationship between loan default rate and interest 
-rates and loan purpose?
-
-
-**Answer**: Out of the applicants that defaulted on their loans, small business
-and credit card loans have the highest median interest rates. Therefore, it can 
-be stated that applicants are more likely to default on their loans with a higher
-interest rate, especially when it is for a small business or credit card.
-
-
-```{r}
+### question 7: Is there a relationship between loan default rate and interest rates and loan purpose?
+```{r, echo=FALSE}
+# question 7: Is there a relationship between loan default rate and interest 
+# rates and loan purpose?
 loans_df %>% filter(loan_default == "yes") %>%
   group_by(loan_default, loan_purpose) %>%
   summarise(
@@ -251,10 +352,10 @@ loans_df %>% filter(loan_default == "yes") %>%
 ```
 
 
-# Predictive Modeling 
+## Predictive models 
 
 
-## Model 1 Logistic Regression
+### Model 1 Logistic Regression
 
 ```{r}
 #split loans_df into training and test sets
@@ -282,7 +383,6 @@ loan_recipe %>%
   bake(new_data = NULL)
 ```
 
-
 ```{r}
 #specify model
 loan_logistic <- logistic_reg() %>%
@@ -301,8 +401,6 @@ logistic_fit <- logistic_wf %>% last_fit(split = loan_split)
 logistic_predictions <- logistic_fit %>% collect_predictions()
 ```
 
-
-
 ```{r}
 #confusion matrix
 conf_mat(logistic_predictions,
@@ -310,20 +408,17 @@ conf_mat(logistic_predictions,
          estimate = .pred_class)
 ```
 
-
 ```{r}
 #roc curve
-roc_curve(logistic_predictions,
-          truth = loan_default,
-          estimate = .pred_yes) %>% autoplot()
+roc_curve(logistic_predictions, truth = loan_default, estimate = .pred_yes) %>% 
+  autoplot()
 ```
-
 
 ```{r}
 #area under curve
 roc_auc(logistic_predictions, truth = loan_default, .pred_yes)
 ```
-
+Accuracy: 99%
 
 
 ```{r}
@@ -333,18 +428,19 @@ tidy(log_model)
 ```
 
 ```{r}
+#get summary
 summary(log_model)
 ```
 
 
 ```{r}
+# get vip
 vip(log_model)
 ```
 
 
 
-
-## Model 2 LDA
+### Model 2 LDA
 
 ```{r}
 #specify model
@@ -380,16 +476,15 @@ roc_curve(lda_predictions, truth=loan_default, estimate= .pred_yes) %>%
   autoplot()
 ```
 
-
 ```{r}
 #Area under ROC
 roc_auc(lda_predictions, truth=loan_default, .pred_yes)
 ```
+Accuracy: 98.99%
 
 
 
-
-## Model 3 K-Nearest Neighbor 
+### Model 3 K-Nearest Neighbor 
 
 ```{r}
 #specify model
@@ -398,7 +493,6 @@ knn_model <- nearest_neighbor(neighbors = tune()) %>%
   set_mode("classification")
 ```
 
-
 ```{r}
 #workflow
 knn_wf <- workflow() %>%
@@ -406,13 +500,10 @@ knn_wf <- workflow() %>%
   add_recipe(loan_recipe)
 ```
 
-
-
 ```{r}
 #create grid for hyperparameter testing
 k_grid <- tibble(neighbors = c(10,20,30,40,50,75,100,125,150))
 ```
-
 
 ```{r}
 #tuning wf
@@ -431,12 +522,10 @@ knn_fit <- final_knn_wf %>% last_fit(split=loan_split)
 knn_predictions <- knn_fit %>% collect_predictions()
 ```
 
-
 ```{r}
 #confusion matrix
 conf_mat(knn_predictions, truth= loan_default, estimate = .pred_class)
 ```
-
 
 ```{r}
 #roc curve 
@@ -450,6 +539,7 @@ roc_curve(knn_predictions, truth = loan_default, estimate= .pred_yes) %>%
 roc_auc(knn_predictions, truth = loan_default, estimate= .pred_yes)
 ```
 
+Accuracy: 90%
 
 
 
